@@ -16,10 +16,10 @@ def get_titles_from_search_results(filename):
     """
 
     soup = None
+    results = []
     with open(filename) as f:
         search = f.read()
         soup = BeautifulSoup(search, 'html.parser')
-    results = []
     for book_info in soup.find_all('tr'):
         results.append((book_info.find_next('a', class_='bookTitle').text.strip(),book_info.find_next('a', class_='authorName').text.strip()))
     return results
@@ -37,8 +37,14 @@ def get_search_links():
     “https://www.goodreads.com/book/show/kdkd".
 
     """
+    results = []
+    resp = requests.get('https://www.goodreads.com/search?q=fantasy&qid=NwUsLiA2Nc')
+    if resp.ok:
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        for book in soup.find_all('a', class_='bookTitle')[:10]:
+            results.append(f"https://www.goodreads.com{book['href']}")
+    return results
 
-    pass
 
 
 def get_book_summary(book_url):
@@ -130,14 +136,18 @@ class TestCases(unittest.TestCase):
 
 
     def test_get_search_links(self):
+        results = get_search_links()
         # check that TestCases.search_urls is a list
+        self.assertIsInstance(results, list)
 
         # check that the length of TestCases.search_urls is correct (10 URLs)
-
+        self.assertEqual(len(results), 10)
 
         # check that each URL in the TestCases.search_urls is a string
         # check that each URL contains the correct url for Goodreads.com followed by /book/show/
-        pass
+        for result in results:
+            self.assertIsInstance(result, str)
+            self.assertIn('https://www.goodreads.com/book/show/', result)
 
 
     def test_get_book_summary(self):
